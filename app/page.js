@@ -1517,6 +1517,13 @@ export default function Home() {
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [tasteProfile, setTasteProfile] = useState(null);
 
+  // Log Google Maps API key in development mode
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.log("MAP KEY LOADED", process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
+    }
+  }, []);
+
   useEffect(() => {
     try {
       setFavorites(loadFavoritesPlaceIdsFromStorage());
