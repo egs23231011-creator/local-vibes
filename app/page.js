@@ -785,14 +785,26 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
         const details = await detailsRes.json();
  
         const reviews = details.result?.reviews ?? [];
+        
+        // Skip analyze call if no reviews available
+        if (!reviews || reviews.length === 0) {
+          console.log("No reviews available, skipping analyze for:", place.place_id);
+          if (!cancelled) setVibes(scoreIntentVibes(place, []));
+          return;
+        }
+
         const analyzeRes = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ placeId: place.place_id, reviews }),
+          body: JSON.stringify({ placeId: place.place_id, placeName: place.name, reviews }),
         });
-        if (!analyzeRes.ok) throw new Error("analyze failed");
+        if (!analyzeRes.ok) {
+          const errorData = await analyzeRes.json().catch(() => ({ error: "Unknown error" }));
+          console.error("Analyze API error:", errorData);
+          throw new Error("analyze failed");
+        }
         const analysis = await analyzeRes.json();
- 
+
         if (cancelled) return;
         const fallback = scoreIntentVibes(place, reviews);
         setVibes({
@@ -1233,12 +1245,24 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
         const details = await detailsRes.json();
 
         const reviews = details.result?.reviews ?? [];
+        
+        // Skip analyze call if no reviews available
+        if (!reviews || reviews.length === 0) {
+          console.log("No reviews available, skipping analyze for:", place.place_id);
+          if (!cancelled) setVibes(scoreIntentVibes(place, []));
+          return;
+        }
+
         const analyzeRes = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ placeId: place.place_id, reviews }),
+          body: JSON.stringify({ placeId: place.place_id, placeName: place.name, reviews }),
         });
-        if (!analyzeRes.ok) throw new Error("analyze failed");
+        if (!analyzeRes.ok) {
+          const errorData = await analyzeRes.json().catch(() => ({ error: "Unknown error" }));
+          console.error("Analyze API error:", errorData);
+          throw new Error("analyze failed");
+        }
         const analysis = await analyzeRes.json();
 
         if (cancelled) return;
@@ -1629,25 +1653,33 @@ export default function Home() {
         if (!place) continue;
 
         const reviews = place.reviews ?? [];
-        const analyzeRes = await fetch("/api/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ placeId, reviews }),
-        });
-        let vibes;
-        if (analyzeRes.ok) {
-          const analysis = await analyzeRes.json();
-          const fallback = scoreIntentVibes(place, reviews);
-          vibes = {
-            workFocus: analysis.workFocus ?? fallback.workFocus,
-            socialEnergy: analysis.socialEnergy ?? fallback.socialEnergy,
-            aesthetic: analysis.aesthetic ?? fallback.aesthetic,
-            calmEscape: analysis.calmEscape ?? fallback.calmEscape,
-            foodQuality: analysis.foodQuality ?? fallback.foodQuality,
-            dateNight: analysis.dateNight ?? fallback.dateNight,
-          };
-        } else {
+        
+        // Skip analyze call if no reviews available
+        if (!reviews || reviews.length === 0) {
           vibes = scoreIntentVibes(place, reviews);
+        } else {
+          const analyzeRes = await fetch("/api/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ placeId, placeName: place.name, reviews }),
+          });
+          let vibes;
+          if (analyzeRes.ok) {
+            const analysis = await analyzeRes.json();
+            const fallback = scoreIntentVibes(place, reviews);
+            vibes = {
+              workFocus: analysis.workFocus ?? fallback.workFocus,
+              socialEnergy: analysis.socialEnergy ?? fallback.socialEnergy,
+              aesthetic: analysis.aesthetic ?? fallback.aesthetic,
+              calmEscape: analysis.calmEscape ?? fallback.calmEscape,
+              foodQuality: analysis.foodQuality ?? fallback.foodQuality,
+              dateNight: analysis.dateNight ?? fallback.dateNight,
+            };
+          } else {
+            const errorData = await analyzeRes.json().catch(() => ({ error: "Unknown error" }));
+            console.error("Analyze API error in taste profile:", errorData);
+            vibes = scoreIntentVibes(place, reviews);
+          }
         }
 
         profile.preferredIntents.workFocus += vibes.workFocus ?? 0;

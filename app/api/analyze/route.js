@@ -3,24 +3,39 @@ import { NextResponse } from 'next/server';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { reviews, placeName } = body;
+    const { reviews, placeId, placeName } = body;
 
+    // Validate reviews
     if (!reviews || !Array.isArray(reviews)) {
+      console.error('Missing or invalid reviews field:', body);
       return NextResponse.json(
         { error: 'reviews array is required' },
         { status: 400 }
       );
     }
 
-    if (!placeName || typeof placeName !== 'string') {
+    // Validate that we have at least one review to analyze
+    if (reviews.length === 0) {
+      console.error('Empty reviews array provided');
       return NextResponse.json(
-        { error: 'placeName string is required' },
+        { error: 'reviews array cannot be empty' },
+        { status: 400 }
+      );
+    }
+
+    // placeName is optional, but if provided must be a string
+    const displayName = placeName || placeId || 'this place';
+    if (typeof displayName !== 'string') {
+      console.error('Invalid placeName/placeId:', { placeName, placeId });
+      return NextResponse.json(
+        { error: 'placeName or placeId must be a valid string' },
         { status: 400 }
       );
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
+      console.error('Gemini API key not configured');
       return NextResponse.json(
         { error: 'Gemini API key not configured' },
         { status: 500 }
