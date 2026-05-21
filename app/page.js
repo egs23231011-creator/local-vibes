@@ -1646,6 +1646,42 @@ export default function Home() {
     computeTasteProfile();
   }, [favorites]);
 
+  // Transform query with cuisine/intent keywords for better API results
+  function transformSearchQuery(inputQuery, currentPlaceType) {
+    const lowerQuery = inputQuery.toLowerCase();
+    let transformedQuery = inputQuery;
+    let transformedPlaceType = currentPlaceType;
+
+    // Detect cuisine/intent keywords and enhance query
+    if (lowerQuery.includes('pho') || lowerQuery.includes('vietnamese')) {
+      transformedQuery = inputQuery + ' Vietnamese restaurant';
+      transformedPlaceType = 'restaurant';
+    } else if (lowerQuery.includes('chinese')) {
+      transformedQuery = inputQuery + ' Chinese restaurant dim sum';
+      transformedPlaceType = 'restaurant';
+    } else if (lowerQuery.includes('japanese') || lowerQuery.includes('sushi')) {
+      transformedQuery = inputQuery + ' Japanese restaurant sushi';
+      transformedPlaceType = 'restaurant';
+    } else if (lowerQuery.includes('korean')) {
+      transformedQuery = inputQuery + ' Korean restaurant Korean BBQ';
+      transformedPlaceType = 'restaurant';
+    } else if (lowerQuery.includes('dessert') || lowerQuery.includes('sweets') || lowerQuery.includes('bakery')) {
+      transformedQuery = inputQuery + ' dessert cafe bakery sweets';
+      transformedPlaceType = 'bakery';
+    } else if (lowerQuery.includes('coffee') || lowerQuery.includes('café') || lowerQuery.includes('cafe')) {
+      transformedQuery = inputQuery + ' café coffee shop';
+      transformedPlaceType = 'café';
+    } else if (lowerQuery.includes('bar') || lowerQuery.includes('drinks') || lowerQuery.includes('nightlife')) {
+      transformedQuery = inputQuery + ' bar drinks nightlife';
+      transformedPlaceType = 'bar';
+    } else if (lowerQuery.includes('study') || lowerQuery.includes('work') || lowerQuery.includes('quiet')) {
+      transformedQuery = inputQuery + ' quiet café coffee shop work friendly';
+      transformedPlaceType = 'café';
+    }
+
+    return { transformedQuery, transformedPlaceType };
+  }
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!query.trim()) return;
@@ -1654,19 +1690,25 @@ export default function Home() {
     rawResultsRef.current = [];
     setResults([]);
     setSearched(true);
-    // Save last search query and place type to localStorage
+    
+    // Transform query with cuisine/intent keywords for better API results
+    const { transformedQuery, transformedPlaceType } = transformSearchQuery(query, placeType);
+    
+    // Save original query for display purposes
     try {
       localStorage.setItem("last_search_query", query);
-      localStorage.setItem("last_place_type", placeType);
+      localStorage.setItem("last_place_type", transformedPlaceType);
     } catch {
       /* ignore */
     }
+    
     try {
-      const res  = await fetch(`/api/places?query=${encodeURIComponent(`${placeType} in ${query}`)}`);
+      // Use transformed query for API call
+      const res  = await fetch(`/api/places?query=${encodeURIComponent(`${transformedPlaceType} in ${transformedQuery}`)}`);
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Something went wrong."); return; }
       rawResultsRef.current = data.results ?? [];
-      setResults(rankAndEnrichPlaces(rawResultsRef.current, selectedIntent, placeType, tasteProfile));
+      setResults(rankAndEnrichPlaces(rawResultsRef.current, selectedIntent, transformedPlaceType, tasteProfile));
     } catch {
       setError("Network error — please check your connection and try again.");
     } finally {
