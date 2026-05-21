@@ -1521,6 +1521,105 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
   );
 }
 
+// ─── Google Map Component ───────────────────────────────────────────────────────
+
+function GoogleMap({ places, selectedPlace, onPlaceClick, isFavorite }) {
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markersRef = useRef([]);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+
+  // Load Google Maps script dynamically
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !window.google && !scriptLoaded) {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.onload = () => {
+        setScriptLoaded(true);
+      };
+      document.head.appendChild(script);
+    } else if (window.google) {
+      setScriptLoaded(true);
+    }
+  }, [scriptLoaded]);
+
+  // Initialize map and markers
+  useEffect(() => {
+    if (!scriptLoaded || !mapRef.current || places.length === 0) return;
+
+    if (!mapInstanceRef.current) {
+      mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
+        center: { lat: places[0]?.geometry?.location?.lat || 37.7749, lng: places[0]?.geometry?.location?.lng || -122.4194 },
+        zoom: 13,
+        styles: [
+          { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+        ],
+      });
+    }
+
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
+
+    // Add markers for each place
+    places.forEach((place) => {
+      if (!place.geometry?.location) return;
+
+      const scores = scoreIntentVibes(place, []);
+      const dominant = dominantVibeFromScores(scores);
+
+      const colorMap = {
+        workFocus: "#22c55e",    // green
+        socialEnergy: "#f97316", // orange
+        aesthetic: "#a855f7",    // purple
+        calmEscape: "#3b82f6",   // blue
+        foodQuality: "#eab308",  // yellow
+        dateNight: "#ef4444",    // red
+      };
+
+      const markerColor = colorMap[dominant] || "#6b7280";
+
+      const marker = new window.google.maps.Marker({
+        position: { lat: place.geometry.location.lat, lng: place.geometry.location.lng },
+        map: mapInstanceRef.current,
+        title: place.name,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: markerColor,
+          fillOpacity: 0.9,
+          strokeColor: "#ffffff",
+          strokeWeight: 2,
+        },
+      });
+
+      marker.addListener("click", () => {
+        onPlaceClick(place);
+      });
+
+      markersRef.current.push(marker);
+    });
+
+    // Fit bounds to show all markers
+    if (markersRef.current.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+      markersRef.current.forEach(marker => bounds.extend(marker.getPosition()));
+      mapInstanceRef.current.fitBounds(bounds);
+    }
+  }, [scriptLoaded, places, onPlaceClick]);
+
+  if (!scriptLoaded) {
+    return (
+      <div style={{ height: 500, background: "#e5e5e5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "#666" }}>Loading map...</p>
+      </div>
+    );
+  }
+
+  return <div ref={mapRef} style={{ width: "100%", height: 500, borderRadius: 16, overflow: "hidden" }} />;
+}
+
 // ─── Home ─────────────────────────────────────────────────────────────────────
  
 export default function Home() {
@@ -1533,6 +1632,7 @@ export default function Home() {
   const [error,     setError]     = useState("");
   const [searched,  setSearched]  = useState(false);
   const [selectedIntent, setSelectedIntent] = useState(null);
+  const [viewMode,  setViewMode]  = useState("list"); // "list" or "map"
   const rawResultsRef = useRef([]);
   const feedRawResultsRef = useRef([]);
 
@@ -1978,6 +2078,55 @@ export default function Home() {
  
         {/* ── RESULTS ── */}
         <section style={{ maxWidth:1152, margin:"0 auto", padding:"40px 16px" }}>
+
+          {/* View Toggle */}
+          {(!loading && (results.length > 0 || visibleFeedResults.length > 0)) && (
+            <div style={{ marginBottom: 20, display: "flex", justifyContent: "flex-end" }}>
+              <div style={{
+                background: "var(--parchment)",
+                borderRadius: 999,
+                padding: 4,
+                display: "flex",
+                gap: 4,
+                border: "1px solid rgba(44,24,16,0.15)",
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("list")}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    padding: "8px 16px",
+                    borderRadius: 999,
+                    border: "none",
+                    background: viewMode === "list" ? "var(--espresso)" : "transparent",
+                    color: viewMode === "list" ? "var(--cream)" : "var(--espresso)",
+                    cursor: "pointer",
+                    outline: "none",
+                  }}
+                >
+                  List View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("map")}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    padding: "8px 16px",
+                    borderRadius: 999,
+                    border: "none",
+                    background: viewMode === "map" ? "var(--espresso)" : "transparent",
+                    color: viewMode === "map" ? "var(--cream)" : "var(--espresso)",
+                    cursor: "pointer",
+                    outline: "none",
+                  }}
+                >
+                  Map View
+                </button>
+              </div>
+            </div>
+          )}
  
           {error && (
             <div style={{
@@ -1999,130 +2148,14 @@ export default function Home() {
  
           {!loading && results.length > 0 && (
             <>
-              <div style={{ marginBottom: 20 }}>
-                <p style={{
-                  fontSize: 9, fontWeight: 900, textTransform: "uppercase",
-                  letterSpacing: "0.25em", color: "var(--terracotta)", margin: "0 0 10px",
-                }}>
-                  Rank by intent
-                </p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-                  {INTENT_FILTER_OPTIONS.map((opt) => {
-                    const active =
-                      (opt.key === null && selectedIntent === null) ||
-                      (opt.key !== null && opt.key === selectedIntent);
-                    return (
-                      <button
-                        key={opt.key === null ? "all" : opt.key}
-                        type="button"
-                        onClick={() => setSelectedIntent(opt.key)}
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          padding: "8px 14px",
-                          borderRadius: 999,
-                          border: active
-                            ? "1px solid var(--terracotta)"
-                            : "1px solid rgba(44,24,16,0.15)",
-                          background: active ? "rgba(196,97,42,0.12)" : "var(--parchment)",
-                          color: active ? "var(--terracotta)" : "var(--espresso)",
-                          cursor: "pointer",
-                          outline: "none",
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    onClick={() => setShowFavoritesOnly((v) => !v)}
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      padding: "8px 14px",
-                      borderRadius: 999,
-                      marginLeft: "auto",
-                      border: showFavoritesOnly
-                        ? "1px solid var(--terracotta)"
-                        : "1px solid rgba(44,24,16,0.15)",
-                      background: showFavoritesOnly ? "rgba(196,97,42,0.12)" : "var(--parchment)",
-                      color: showFavoritesOnly ? "var(--terracotta)" : "var(--espresso)",
-                      cursor: "pointer",
-                      outline: "none",
-                    }}
-                  >
-                    Favorites only
-                  </button>
-                </div>
-              </div>
-
-              {showFavoritesOnly && visibleResults.length === 0 ? (
-                <p style={{
-                  fontSize: 13, color: "var(--espresso)", opacity: 0.5, marginBottom: 20, lineHeight: 1.5,
-                }}>
-                  No favorited spots in these results.
-                </p>
-              ) : (
-                <>
-              {/* Section header */}
-              <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:24 }}>
-                <span style={{ fontSize:9, fontWeight:900, textTransform:"uppercase",
-                  letterSpacing:"0.4em", color:"var(--terracotta)" }}>
-                  {visibleResults.length} Spots Reviewed
-                </span>
-                <span style={{ height:1, flex:1, background:"rgba(44,24,16,0.12)" }} />
-                <span style={{ fontSize:9, fontWeight:900, textTransform:"uppercase",
-                  letterSpacing:"0.4em", color:"var(--espresso)", opacity:0.4 }}>
-                  {query}
-                </span>
-              </div>
- 
-              {/* Featured card — standalone block, fully outside the grid */}
-              <PlaceCard place={visibleResults[0]} featured isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(visibleResults[0])} tasteProfile={tasteProfile} />
- 
-              {/* Regular cards grid */}
-              {visibleResults.length > 1 && (
-                <div className="place-grid">
-                  {visibleResults.slice(1).map((place) => (
-                    <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} />
-                  ))}
-                </div>
-              )}
-                </>
-              )}
-            </>
-          )}
- 
-          {!loading && searched && results.length === 0 && !error && (
-            <div style={{ textAlign:"center", padding:"80px 0" }}>
-              <span style={{ fontSize:64, display:"block", marginBottom:16, opacity:0.3 }}>🌿</span>
-              <p style={{ fontSize:14, color:"var(--espresso)", opacity:0.5 }}>
-                No spots found. Try a different city or type.
-              </p>
-            </div>
-          )}
- 
-          {!loading && !searched && (
-            <>
-              {console.log("Render check - feedLoading:", feedLoading, "visibleFeedResults.length:", visibleFeedResults.length, "searched:", searched)}
-              {feedLoading && (
-                <>
-                  <Skeleton featured />
-                  <div className="place-grid">
-                    {[1,2,3,4,5].map((i) => <Skeleton key={i} />)}
-                  </div>
-                </>
-              )}
-
-              {!feedLoading && visibleFeedResults.length > 0 && (
+              {viewMode === "list" && (
                 <>
                   <div style={{ marginBottom: 20 }}>
                     <p style={{
                       fontSize: 9, fontWeight: 900, textTransform: "uppercase",
                       letterSpacing: "0.25em", color: "var(--terracotta)", margin: "0 0 10px",
                     }}>
-                      For You
+                      Rank by intent
                     </p>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
                       {INTENT_FILTER_OPTIONS.map((opt) => {
@@ -2175,35 +2208,177 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {showFavoritesOnly && visibleFeedResults.length === 0 ? (
+                  {showFavoritesOnly && visibleResults.length === 0 ? (
                     <p style={{
                       fontSize: 13, color: "var(--espresso)", opacity: 0.5, marginBottom: 20, lineHeight: 1.5,
                     }}>
-                      No favorited spots in your feed.
+                      No favorited spots in these results.
                     </p>
                   ) : (
                     <>
-                      {/* Section header */}
-                      <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:24 }}>
-                        <span style={{ fontSize:9, fontWeight:900, textTransform:"uppercase",
-                          letterSpacing:"0.4em", color:"var(--terracotta)" }}>
-                          {visibleFeedResults.length} Spots For You
-                        </span>
-                        <span style={{ height:1, flex:1, background:"rgba(44,24,16,0.12)" }} />
+                    {/* Section header */}
+                    <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:24 }}>
+                      <span style={{ fontSize:9, fontWeight:900, textTransform:"uppercase",
+                        letterSpacing:"0.4em", color:"var(--terracotta)" }}>
+                        {visibleResults.length} Spots Reviewed
+                      </span>
+                      <span style={{ height:1, flex:1, background:"rgba(44,24,16,0.12)" }} />
+                      <span style={{ fontSize:9, fontWeight:900, textTransform:"uppercase",
+                        letterSpacing:"0.4em", color:"var(--espresso)", opacity:0.4 }}>
+                        {query}
+                      </span>
+                    </div>
+
+                    {/* Featured card — standalone block, fully outside the grid */}
+                    <PlaceCard place={visibleResults[0]} featured isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(visibleResults[0])} tasteProfile={tasteProfile} />
+
+                    {/* Regular cards grid */}
+                    {visibleResults.length > 1 && (
+                      <div className="place-grid">
+                        {visibleResults.slice(1).map((place) => (
+                          <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} />
+                        ))}
+                      </div>
+                    )}
+                    </>
+                  )}
+                </>
+              )}
+
+              {viewMode === "map" && (
+                <GoogleMap
+                  places={visibleResults}
+                  selectedPlace={selectedPlace}
+                  onPlaceClick={setSelectedPlace}
+                  isFavorite={isFavorite}
+                />
+              )}
+            </>
+          )}
+ 
+          {!loading && searched && results.length === 0 && !error && (
+            <div style={{ textAlign:"center", padding:"80px 0" }}>
+              <span style={{ fontSize:64, display:"block", marginBottom:16, opacity:0.3 }}>🌿</span>
+              <p style={{ fontSize:14, color:"var(--espresso)", opacity:0.5 }}>
+                No spots found. Try a different city or type.
+              </p>
+            </div>
+          )}
+ 
+          {!loading && !searched && (
+            <>
+              {console.log("Render check - feedLoading:", feedLoading, "visibleFeedResults.length:", visibleFeedResults.length, "searched:", searched)}
+              {feedLoading && (
+                <>
+                  <Skeleton featured />
+                  <div className="place-grid">
+                    {[1,2,3,4,5].map((i) => <Skeleton key={i} />)}
+                  </div>
+                </>
+              )}
+
+              {!feedLoading && visibleFeedResults.length > 0 && (
+                <>
+                  {viewMode === "list" && (
+                    <>
+                      <div style={{ marginBottom: 20 }}>
+                        <p style={{
+                          fontSize: 9, fontWeight: 900, textTransform: "uppercase",
+                          letterSpacing: "0.25em", color: "var(--terracotta)", margin: "0 0 10px",
+                        }}>
+                          For You
+                        </p>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                          {INTENT_FILTER_OPTIONS.map((opt) => {
+                            const active =
+                              (opt.key === null && selectedIntent === null) ||
+                              (opt.key !== null && opt.key === selectedIntent);
+                            return (
+                              <button
+                                key={opt.key === null ? "all" : opt.key}
+                                type="button"
+                                onClick={() => setSelectedIntent(opt.key)}
+                                style={{
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  padding: "8px 14px",
+                                  borderRadius: 999,
+                                  border: active
+                                    ? "1px solid var(--terracotta)"
+                                    : "1px solid rgba(44,24,16,0.15)",
+                                  background: active ? "rgba(196,97,42,0.12)" : "var(--parchment)",
+                                  color: active ? "var(--terracotta)" : "var(--espresso)",
+                                  cursor: "pointer",
+                                  outline: "none",
+                                }}
+                              >
+                                {opt.label}
+                              </button>
+                            );
+                          })}
+                          <button
+                            type="button"
+                            onClick={() => setShowFavoritesOnly((v) => !v)}
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              padding: "8px 14px",
+                              borderRadius: 999,
+                              marginLeft: "auto",
+                              border: showFavoritesOnly
+                                ? "1px solid var(--terracotta)"
+                                : "1px solid rgba(44,24,16,0.15)",
+                              background: showFavoritesOnly ? "rgba(196,97,42,0.12)" : "var(--parchment)",
+                              color: showFavoritesOnly ? "var(--terracotta)" : "var(--espresso)",
+                              cursor: "pointer",
+                              outline: "none",
+                            }}
+                          >
+                            Favorites only
+                          </button>
+                        </div>
                       </div>
 
-                      {/* Featured card — standalone block, fully outside the grid */}
-                      <PlaceCard place={visibleFeedResults[0]} featured isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(visibleFeedResults[0])} tasteProfile={tasteProfile} />
+                      {showFavoritesOnly && visibleFeedResults.length === 0 ? (
+                        <p style={{
+                          fontSize: 13, color: "var(--espresso)", opacity: 0.5, marginBottom: 20, lineHeight: 1.5,
+                        }}>
+                          No favorited spots in your feed.
+                        </p>
+                      ) : (
+                        <>
+                          {/* Section header */}
+                          <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:24 }}>
+                            <span style={{ fontSize:9, fontWeight:900, textTransform:"uppercase",
+                              letterSpacing:"0.4em", color:"var(--terracotta)" }}>
+                              {visibleFeedResults.length} Spots For You
+                            </span>
+                            <span style={{ height:1, flex:1, background:"rgba(44,24,16,0.12)" }} />
+                          </div>
 
-                      {/* Regular cards grid */}
-                      {visibleFeedResults.length > 1 && (
-                        <div className="place-grid">
-                          {visibleFeedResults.slice(1).map((place) => (
-                            <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} />
-                          ))}
-                        </div>
+                          {/* Featured card — standalone block, fully outside the grid */}
+                          <PlaceCard place={visibleFeedResults[0]} featured isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(visibleFeedResults[0])} tasteProfile={tasteProfile} />
+
+                          {/* Regular cards grid */}
+                          {visibleFeedResults.length > 1 && (
+                            <div className="place-grid">
+                              {visibleFeedResults.slice(1).map((place) => (
+                                <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} />
+                              ))}
+                            </div>
+                          )}
+                        </>
                       )}
                     </>
+                  )}
+
+                  {viewMode === "map" && (
+                    <GoogleMap
+                      places={visibleFeedResults}
+                      selectedPlace={selectedPlace}
+                      onPlaceClick={setSelectedPlace}
+                      isFavorite={isFavorite}
+                    />
                   )}
                 </>
               )}
