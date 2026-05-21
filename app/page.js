@@ -311,6 +311,33 @@ function scoreIntentVibes(place, reviews) {
     scores = { ...scores, foodQuality: baseFq * 1.2 };
   }
 
+  // Enhanced context weighting
+  if (primary === "cafe" || primary === "café") {
+    const wf = Number(scores.workFocus) || 0;
+    const ce = Number(scores.calmEscape) || 0;
+    scores = {
+      ...scores,
+      workFocus: Math.min(100, Math.round(wf * 1.25 + 8)),
+      calmEscape: Math.min(100, Math.round(ce * 1.2 + 5)),
+    };
+  } else if (primary === "bar" || primary === "pub" || primary === "night_club") {
+    const se = Number(scores.socialEnergy) || 0;
+    const dn = Number(scores.dateNight) || 0;
+    scores = {
+      ...scores,
+      socialEnergy: Math.min(100, Math.round(se * 1.4 + 15)),
+      dateNight: Math.min(100, Math.round(dn * 1.35 + 12)),
+    };
+  } else if (primary === "restaurant") {
+    const fq = Number(scores.foodQuality) || 0;
+    const dn = Number(scores.dateNight) || 0;
+    scores = {
+      ...scores,
+      foodQuality: Math.min(100, Math.round(fq * 1.3 + 10)),
+      dateNight: Math.min(100, Math.round(dn * 1.15 + 5)),
+    };
+  }
+
   if (hasCafeLibraryProductivityTypes(types)) {
     const se = Number(scores.socialEnergy) || 0;
     const wf = Number(scores.workFocus) || 0;
@@ -348,10 +375,35 @@ function scoreIntentVibes(place, reviews) {
     out[k] = Math.min(100, Math.max(0, Math.round(Number(scores[k]) || 0)));
   }
 
+  // Reduce irrelevant intent noise - lower minimum score
   for (const k of INTENT_RANK_KEYS) {
     if (out[k] === 0) {
-      out[k] = 7;
+      out[k] = 3;
     }
+  }
+
+  // Normalize scores to prevent flat clustering
+  const avg = avgIntentScore(out);
+  if (avg > 0) {
+    const spread = Math.max(...Object.values(out)) - Math.min(...Object.values(out));
+    if (spread < 20) {
+      // If scores are too clustered, amplify differences
+      for (const k of INTENT_RANK_KEYS) {
+        out[k] = Math.min(100, Math.round((out[k] - avg) * 1.3 + avg));
+      }
+    }
+  }
+
+  // Improve contrast for top 2 intents
+  const sortedKeys = [...INTENT_RANK_KEYS].sort((a, b) => out[b] - out[a]);
+  if (sortedKeys.length >= 2) {
+    const top1 = sortedKeys[0];
+    const top2 = sortedKeys[1];
+    const top1Score = out[top1];
+    const top2Score = out[top2];
+    // Boost top 2 to stand out more
+    out[top1] = Math.min(100, Math.round(top1Score * 1.08 + 3));
+    out[top2] = Math.min(100, Math.round(top2Score * 1.05 + 2));
   }
 
   const dominant = dominantVibeFromScores(out);
