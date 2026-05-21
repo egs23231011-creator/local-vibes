@@ -817,12 +817,13 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
         overflow: "hidden",
         marginBottom: 20,
         cursor: onClick ? "pointer" : "default",
+        maxWidth: "100%",
       }}>
         {/* Photo */}
-        <div style={{ position: "relative", height: 300, background: "#d6d3d1", overflow: "hidden" }}>
+        <div style={{ position: "relative", height: "clamp(200px, 40vw, 300px)", background: "#d6d3d1", overflow: "hidden" }}>
           {photoUrl ? (
             <img src={photoUrl} alt={place.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              style={{ width: "100%", maxWidth: "100%", height: "100%", objectFit: "cover", display: "block" }}
               onError={() => setImgError(true)} />
           ) : (
             <div style={{
@@ -874,7 +875,7 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
  
         {/* Content */}
         <div style={{ padding: "24px 28px 28px" }}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12, minWidth: 0 }}>
             <PriceLevel level={place.price_level} />
             {bestFor.map((tag) => (
               <span key={tag} style={{
@@ -889,11 +890,11 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
             fontFamily: "'Georgia','Times New Roman',serif",
             fontSize: "clamp(1.6rem, 4vw, 2.4rem)", fontWeight: 900,
             color: "var(--espresso)", lineHeight: 1.15,
-            margin: "0 0 6px", wordBreak: "break-word",
+            margin: "0 0 6px", wordBreak: "break-word", overflowWrap: "anywhere",
           }}>
             {place.name}
           </h2>
-          <p style={{ fontSize: 12, color: "#a8a29e", marginBottom: 12, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 12, color: "#a8a29e", marginBottom: 12, lineHeight: 1.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>
             {place.formatted_address}
           </p>
  
@@ -903,6 +904,7 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
               fontSize: 14, color: "var(--espresso)", opacity: 0.65,
               margin: "0 0 16px", lineHeight: 1.6,
               borderLeft: "3px solid var(--terracotta)", paddingLeft: 12,
+              wordBreak: "break-word", overflowWrap: "anywhere",
             }}>
               "{editorLine}"
             </p>
@@ -912,6 +914,7 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
             <p style={{
               fontSize: 12, fontWeight: 500, color: "var(--espresso)", opacity: 0.52,
               margin: "0 0 16px", lineHeight: 1.55,
+              wordBreak: "break-word", overflowWrap: "anywhere",
             }}>
               {bestForSummary}
             </p>
@@ -921,12 +924,13 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
             <p style={{
               fontSize: 12, fontWeight: 500, color: "var(--terracotta)", opacity: 0.7,
               margin: "0 0 16px", lineHeight: 1.55,
+              wordBreak: "break-word", overflowWrap: "anywhere",
             }}>
               {whyYoullLikeThis}
             </p>
           )}
  
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, minWidth: 0 }}>
             {place.rating ? (
               <>
                 <StarRating rating={place.rating} />
@@ -970,11 +974,12 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
       display: "flex", flexDirection: "column",
       overflow: "hidden",
       cursor: onClick ? "pointer" : "default",
+      maxWidth: "100%",
     }}>
-      <div style={{ position: "relative", height: 176, background: "#d6d3d1", overflow: "hidden", flexShrink: 0 }}>
+      <div style={{ position: "relative", height: "clamp(140px, 25vw, 176px)", background: "#d6d3d1", overflow: "hidden", flexShrink: 0 }}>
         {photoUrl ? (
           <img src={photoUrl} alt={place.name}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            style={{ width: "100%", maxWidth: "100%", height: "100%", objectFit: "cover", display: "block" }}
             onError={() => setImgError(true)} />
         ) : (
           <div style={{
@@ -1022,18 +1027,18 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
       </div>
  
       <div style={{ padding: "4px 16px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4, minWidth: 0 }}>
           <h2 style={{
             fontFamily: "'Georgia','Times New Roman',serif",
             fontSize: 17, fontWeight: 900, color: "var(--espresso)",
-            lineHeight: 1.25, margin: 0, flex: 1, wordBreak: "break-word",
+            lineHeight: 1.25, margin: 0, flex: 1, minWidth: 0, wordBreak: "break-word", overflowWrap: "anywhere",
           }}>
             {place.name}
           </h2>
           <PriceLevel level={place.price_level} />
         </div>
  
-        <p style={{ fontSize: 11, color: "#a8a29e", marginBottom: 10, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 11, color: "#a8a29e", marginBottom: 10, lineHeight: 1.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>
           {place.formatted_address}
         </p>
  
@@ -1043,6 +1048,7 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
             fontSize: 12, color: "var(--espresso)", opacity: 0.6,
             margin: "0 0 10px", lineHeight: 1.5,
             borderLeft: "2px solid var(--terracotta)", paddingLeft: 8,
+            wordBreak: "break-word", overflowWrap: "anywhere",
           }}>
             "{editorLine}"
           </p>
@@ -1052,6 +1058,7 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
           <p style={{
             fontSize: 11, fontWeight: 500, color: "var(--espresso)", opacity: 0.52,
             margin: "0 0 10px", lineHeight: 1.5,
+            wordBreak: "break-word", overflowWrap: "anywhere",
           }}>
             {bestForSummary}
           </p>
@@ -1061,6 +1068,7 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
           <p style={{
             fontSize: 11, fontWeight: 500, color: "var(--terracotta)", opacity: 0.7,
             margin: "0 0 10px", lineHeight: 1.5,
+            wordBreak: "break-word", overflowWrap: "anywhere",
           }}>
             {whyYoullLikeThis}
           </p>
@@ -1078,7 +1086,7 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
           </div>
         )}
  
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, minWidth: 0 }}>
           {place.rating ? (
             <>
               <StarRating rating={place.rating} />
@@ -1117,8 +1125,9 @@ function Skeleton({ featured = false }) {
         background: "var(--parchment)", border: "1px solid rgba(26,16,8,0.10)",
         borderRadius: 24, overflow: "hidden", marginBottom: 20,
         animation: "pulse 1.8s ease-in-out infinite",
+        maxWidth: "100%",
       }}>
-        <div style={{ height: 300, background: "#e7e5e4" }} />
+        <div style={{ height: "clamp(200px, 40vw, 300px)", background: "#e7e5e4" }} />
         <div style={{ padding: "24px 28px 28px" }}>
           <div style={{ height: 12, background: "#e7e5e4", borderRadius: 8, width: "30%", marginBottom: 14 }} />
           <div style={{ height: 36, background: "#e7e5e4", borderRadius: 8, width: "60%", marginBottom: 10 }} />
@@ -1135,8 +1144,9 @@ function Skeleton({ featured = false }) {
       background: "var(--parchment)", border: "1px solid rgba(26,16,8,0.10)",
       borderRadius: 16, overflow: "hidden",
       animation: "pulse 1.8s ease-in-out infinite",
+      maxWidth: "100%",
     }}>
-      <div style={{ height: 176, background: "#e7e5e4" }} />
+      <div style={{ height: "clamp(140px, 25vw, 176px)", background: "#e7e5e4" }} />
       <div style={{ padding: 16 }}>
         <div style={{ height: 14, background: "#e7e5e4", borderRadius: 8, width: "60%", marginBottom: 10 }} />
         <div style={{ height: 10, background: "#f5f5f4", borderRadius: 8, marginBottom: 8 }} />
@@ -1230,7 +1240,7 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
         borderRadius: 24,
         maxWidth: 600,
         width: "100%",
-        maxHeight: "90vh",
+        maxHeight: "90dvh",
         overflow: "auto",
         boxShadow: "0 8px 32px rgba(44,24,16,0.3)",
         position: "relative",
@@ -1264,10 +1274,10 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
         </button>
 
         {/* Photo */}
-        <div style={{ position: "relative", height: 320, background: "#d6d3d1", overflow: "hidden" }}>
+        <div style={{ position: "relative", height: "clamp(200px, 50vw, 320px)", background: "#d6d3d1", overflow: "hidden" }}>
           {photoUrl ? (
             <img src={photoUrl} alt={place.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              style={{ width: "100%", maxWidth: "100%", height: "100%", objectFit: "cover", display: "block" }}
               onError={() => setImgError(true)} />
           ) : (
             <div style={{
@@ -1304,7 +1314,7 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
 
         {/* Content */}
         <div style={{ padding: "28px 32px 32px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, minWidth: 0 }}>
             <PriceLevel level={place.price_level} />
             {place.place_id && (
               <FavoriteHeartButton
@@ -1318,11 +1328,11 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
             fontFamily: "'Georgia','Times New Roman',serif",
             fontSize: "clamp(1.8rem, 4vw, 2.6rem)", fontWeight: 900,
             color: "var(--espresso)", lineHeight: 1.15,
-            margin: "0 0 8px", wordBreak: "break-word",
+            margin: "0 0 8px", wordBreak: "break-word", overflowWrap: "anywhere",
           }}>
             {place.name}
           </h2>
-          <p style={{ fontSize: 13, color: "#a8a29e", marginBottom: 12, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 13, color: "#a8a29e", marginBottom: 12, lineHeight: 1.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>
             {place.formatted_address}
           </p>
           {place.place_id && (
@@ -1350,6 +1360,7 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
               fontSize: 15, color: "var(--espresso)", opacity: 0.65,
               margin: "0 0 20px", lineHeight: 1.6,
               borderLeft: "3px solid var(--terracotta)", paddingLeft: 14,
+              wordBreak: "break-word", overflowWrap: "anywhere",
             }}>
               "{editorLine}"
             </p>
@@ -1359,13 +1370,14 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
             <p style={{
               fontSize: 13, fontWeight: 500, color: "var(--espresso)", opacity: 0.52,
               margin: "0 0 20px", lineHeight: 1.55,
+              wordBreak: "break-word", overflowWrap: "anywhere",
             }}>
               {bestForSummary}
             </p>
           )}
 
           {bestFor.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20, minWidth: 0 }}>
               {bestFor.map((tag) => (
                 <span key={tag} style={{
                   fontSize: 10, fontWeight: 700, textTransform: "uppercase",
@@ -1376,7 +1388,7 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
             </div>
           )}
 
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24, minWidth: 0 }}>
             {place.rating ? (
               <>
                 <StarRating rating={place.rating} />
@@ -1397,12 +1409,12 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
               letterSpacing: "0.3em", color: "var(--terracotta)", marginBottom: 12 }}>
               Why this place?
             </p>
-            <p style={{ fontSize: 13, color: "var(--espresso)", lineHeight: 1.6, margin: 0 }}>
+            <p style={{ fontSize: 13, color: "var(--espresso)", lineHeight: 1.6, margin: 0, wordBreak: "break-word", overflowWrap: "anywhere" }}>
               Dominant vibe: <span style={{ fontWeight: 700, color: "var(--terracotta)" }}>
                 {VIBE_PRESETS.find(p => p.key === dominantVibe)?.label || dominantVibe}
               </span>
             </p>
-            <p style={{ fontSize: 13, color: "var(--espresso)", lineHeight: 1.6, margin: "8px 0 0" }}>
+            <p style={{ fontSize: 13, color: "var(--espresso)", lineHeight: 1.6, margin: "8px 0 0", wordBreak: "break-word", overflowWrap: "anywhere" }}>
               Top vibes: {topVibes.map(v => VIBE_PRESETS.find(p => p.key === v)?.label || v).join(", ")}
             </p>
           </div>
@@ -1416,6 +1428,7 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
               <p style={{
                 fontSize: 13, fontWeight: 500, color: "var(--espresso)", opacity: 0.7,
                 marginBottom: 16, lineHeight: 1.55,
+                wordBreak: "break-word", overflowWrap: "anywhere",
               }}>
                 {bestForSummary}
               </p>
@@ -1438,11 +1451,14 @@ export default function Home() {
   const [query,     setQuery]     = useState("");
   const [placeType, setPlaceType] = useState("café");
   const [results,   setResults]   = useState([]);
+  const [feedResults, setFeedResults] = useState([]);
   const [loading,   setLoading]   = useState(false);
+  const [feedLoading, setFeedLoading] = useState(false);
   const [error,     setError]     = useState("");
   const [searched,  setSearched]  = useState(false);
   const [selectedIntent, setSelectedIntent] = useState(null);
   const rawResultsRef = useRef([]);
+  const feedRawResultsRef = useRef([]);
 
   const [favorites, setFavorites] = useState([]);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -1469,6 +1485,39 @@ export default function Home() {
     } catch {
       /* ignore */
     }
+  }, []);
+
+  // Load For You Feed on mount
+  useEffect(() => {
+    async function loadFeed() {
+      console.log("Loading For You Feed...");
+      setFeedLoading(true);
+      try {
+        // Use default query for feed
+        const searchQuery = "cafes near me";
+        const searchPlaceType = "café";
+
+        console.log("Fetching feed with query:", searchQuery);
+        const res = await fetch(`/api/places?query=${encodeURIComponent(searchQuery)}`);
+        const data = await res.json();
+        
+        if (res.ok) {
+          console.log("Feed API response:", data.results?.length, "places");
+          feedRawResultsRef.current = data.results ?? [];
+          const enriched = rankAndEnrichPlaces(feedRawResultsRef.current, null, searchPlaceType, tasteProfile);
+          console.log("Setting feedResults with", enriched.length, "places");
+          setFeedResults(enriched);
+        } else {
+          console.error("Feed API error:", data.error);
+        }
+      } catch (err) {
+        console.error("Feed loading error:", err);
+      } finally {
+        setFeedLoading(false);
+      }
+    }
+
+    loadFeed();
   }, []);
 
   function isFavorite(placeId) {
@@ -1588,6 +1637,12 @@ export default function Home() {
   }, [selectedIntent, placeType, favorites, tasteProfile]);
 
   useEffect(() => {
+    if (!feedRawResultsRef.current.length) return;
+    const lastPlaceType = localStorage.getItem("last_place_type") || "café";
+    setFeedResults(rankAndEnrichPlaces(feedRawResultsRef.current, selectedIntent, lastPlaceType, tasteProfile));
+  }, [selectedIntent, tasteProfile]);
+
+  useEffect(() => {
     computeTasteProfile();
   }, [favorites]);
 
@@ -1599,6 +1654,13 @@ export default function Home() {
     rawResultsRef.current = [];
     setResults([]);
     setSearched(true);
+    // Save last search query and place type to localStorage
+    try {
+      localStorage.setItem("last_search_query", query);
+      localStorage.setItem("last_place_type", placeType);
+    } catch {
+      /* ignore */
+    }
     try {
       const res  = await fetch(`/api/places?query=${encodeURIComponent(`${placeType} in ${query}`)}`);
       const data = await res.json();
@@ -1619,6 +1681,12 @@ export default function Home() {
     const fav = new Set(favorites);
     return results.filter((p) => p.place_id && fav.has(p.place_id));
   }, [results, showFavoritesOnly, favorites]);
+
+  const visibleFeedResults = useMemo(() => {
+    if (!showFavoritesOnly) return feedResults;
+    const fav = new Set(favorites);
+    return feedResults.filter((p) => p.place_id && fav.has(p.place_id));
+  }, [feedResults, showFavoritesOnly, favorites]);
  
   return (
     <>
@@ -1658,7 +1726,7 @@ export default function Home() {
         @media (min-width: 1024px) { .place-grid { grid-template-columns: repeat(3, 1fr); } }
       `}</style>
  
-      <main style={{ minHeight: "100vh", background: "var(--cream)", fontFamily: "system-ui,sans-serif" }}>
+      <main style={{ minHeight: "100dvh", background: "var(--cream)", fontFamily: "system-ui,sans-serif" }}>
  
         {/* ── HERO ── */}
         <header className="hero-grain hero-dots" style={{
@@ -1729,7 +1797,7 @@ export default function Home() {
         }}>
           <form onSubmit={handleSearch} style={{
             maxWidth:672, margin:"0 auto",
-            display:"flex", flexWrap:"wrap", gap:8,
+            display:"flex", flexWrap:"wrap", gap:8, minWidth:0,
           }}>
             <select value={placeType} onChange={(e) => setPlaceType(e.target.value)}
               style={{
@@ -1745,11 +1813,20 @@ export default function Home() {
               ))}
             </select>
  
-            <div style={{ flex:1, minWidth:180, display:"flex", gap:8 }}>
-              <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+            <div style={{ flex:1, minWidth:0, display:"flex", gap:8 }}>
+              <input type="text" value={query} onChange={(e) => {
+                const newQuery = e.target.value;
+                setQuery(newQuery);
+                // If query is cleared, restore feed
+                if (!newQuery.trim() && searched) {
+                  setSearched(false);
+                  setResults([]);
+                  setError("");
+                }
+              }}
                 placeholder="City or neighborhood…"
                 style={{
-                  flex:1, background:"var(--parchment)", color:"var(--espresso)",
+                  flex:1, minWidth:0, background:"var(--parchment)", color:"var(--espresso)",
                   border:"1px solid rgba(44,24,16,0.2)", borderRadius:12,
                   padding:"10px 16px", fontSize:14, outline:"none",
                 }} />
@@ -1894,15 +1971,122 @@ export default function Home() {
           )}
  
           {!loading && !searched && (
-            <div style={{ textAlign:"center", padding:"80px 0", maxWidth:320, margin:"0 auto" }}>
-              <span style={{ fontSize:72, display:"block", marginBottom:20, opacity:0.2 }}>☕</span>
-              <p style={{
-                fontSize:14, lineHeight:1.7, color:"var(--espresso)", opacity:0.45,
-                fontFamily:"'Georgia',serif", fontStyle:"italic",
-              }}>
-                Every neighborhood has a hidden gem. Type yours above and we'll find it.
-              </p>
-            </div>
+            <>
+              {console.log("Render check - feedLoading:", feedLoading, "visibleFeedResults.length:", visibleFeedResults.length, "searched:", searched)}
+              {feedLoading && (
+                <>
+                  <Skeleton featured />
+                  <div className="place-grid">
+                    {[1,2,3,4,5].map((i) => <Skeleton key={i} />)}
+                  </div>
+                </>
+              )}
+
+              {!feedLoading && visibleFeedResults.length > 0 && (
+                <>
+                  <div style={{ marginBottom: 20 }}>
+                    <p style={{
+                      fontSize: 9, fontWeight: 900, textTransform: "uppercase",
+                      letterSpacing: "0.25em", color: "var(--terracotta)", margin: "0 0 10px",
+                    }}>
+                      For You
+                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                      {INTENT_FILTER_OPTIONS.map((opt) => {
+                        const active =
+                          (opt.key === null && selectedIntent === null) ||
+                          (opt.key !== null && opt.key === selectedIntent);
+                        return (
+                          <button
+                            key={opt.key === null ? "all" : opt.key}
+                            type="button"
+                            onClick={() => setSelectedIntent(opt.key)}
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              padding: "8px 14px",
+                              borderRadius: 999,
+                              border: active
+                                ? "1px solid var(--terracotta)"
+                                : "1px solid rgba(44,24,16,0.15)",
+                              background: active ? "rgba(196,97,42,0.12)" : "var(--parchment)",
+                              color: active ? "var(--terracotta)" : "var(--espresso)",
+                              cursor: "pointer",
+                              outline: "none",
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => setShowFavoritesOnly((v) => !v)}
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: "8px 14px",
+                          borderRadius: 999,
+                          marginLeft: "auto",
+                          border: showFavoritesOnly
+                            ? "1px solid var(--terracotta)"
+                            : "1px solid rgba(44,24,16,0.15)",
+                          background: showFavoritesOnly ? "rgba(196,97,42,0.12)" : "var(--parchment)",
+                          color: showFavoritesOnly ? "var(--terracotta)" : "var(--espresso)",
+                          cursor: "pointer",
+                          outline: "none",
+                        }}
+                      >
+                        Favorites only
+                      </button>
+                    </div>
+                  </div>
+
+                  {showFavoritesOnly && visibleFeedResults.length === 0 ? (
+                    <p style={{
+                      fontSize: 13, color: "var(--espresso)", opacity: 0.5, marginBottom: 20, lineHeight: 1.5,
+                    }}>
+                      No favorited spots in your feed.
+                    </p>
+                  ) : (
+                    <>
+                      {/* Section header */}
+                      <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:24 }}>
+                        <span style={{ fontSize:9, fontWeight:900, textTransform:"uppercase",
+                          letterSpacing:"0.4em", color:"var(--terracotta)" }}>
+                          {visibleFeedResults.length} Spots For You
+                        </span>
+                        <span style={{ height:1, flex:1, background:"rgba(44,24,16,0.12)" }} />
+                      </div>
+
+                      {/* Featured card — standalone block, fully outside the grid */}
+                      <PlaceCard place={visibleFeedResults[0]} featured isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(visibleFeedResults[0])} tasteProfile={tasteProfile} />
+
+                      {/* Regular cards grid */}
+                      {visibleFeedResults.length > 1 && (
+                        <div className="place-grid">
+                          {visibleFeedResults.slice(1).map((place) => (
+                            <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+
+              {!feedLoading && visibleFeedResults.length === 0 && (
+                <div style={{ textAlign:"center", padding:"80px 0", maxWidth:320, margin:"0 auto" }}>
+                  <span style={{ fontSize:72, display:"block", marginBottom:20, opacity:0.2 }}>☕</span>
+                  <p style={{
+                    fontSize:14, lineHeight:1.7, color:"var(--espresso)", opacity:0.45,
+                    fontFamily:"'Georgia',serif", fontStyle:"italic",
+                  }}>
+                    Every neighborhood has a hidden gem. Type yours above and we'll find it.
+                  </p>
+                </div>
+              )}
+            </>
           )}
         </section>
  
