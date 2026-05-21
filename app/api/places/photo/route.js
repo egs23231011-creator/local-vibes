@@ -9,8 +9,9 @@ export async function GET(request) {
     });
   }
  
-  const apiKey = process.env.GOOGLE_PLACES_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
+    console.error("Google Places API key is not configured");
     return new Response(JSON.stringify({ error: "Google Places API key not configured" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
@@ -23,6 +24,8 @@ export async function GET(request) {
     const googleRes = await fetch(googleUrl);
  
     if (!googleRes.ok) {
+      const errorText = await googleRes.text();
+      console.error("Photo fetch failed:", googleRes.status, errorText);
       return new Response(JSON.stringify({ error: "Failed to fetch photo from Google" }), {
         status: googleRes.status,
         headers: { "Content-Type": "application/json" },

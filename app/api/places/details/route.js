@@ -12,8 +12,9 @@ export async function GET(request) {
       );
     }
 
-    const apiKey = process.env.GOOGLE_PLACES_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     if (!apiKey) {
+      console.error("Google Places API key is not configured");
       return NextResponse.json(
         { error: 'Google Places API key not configured' },
         { status: 500 }
@@ -25,6 +26,8 @@ export async function GET(request) {
     const response = await fetch(url);
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Place details request failed:", response.status, errorText);
       return NextResponse.json(
         { error: 'Failed to fetch place details' },
         { status: response.status }
@@ -33,7 +36,17 @@ export async function GET(request) {
 
     const data = await response.json();
 
+    // Handle REQUEST_DENIED error specifically
+    if (data.status === 'REQUEST_DENIED') {
+      console.error("Google Places REQUEST_DENIED:", data.error_message);
+      return NextResponse.json(
+        { error: 'Google Places API access denied. Please check API key configuration.' },
+        { status: 403 }
+      );
+    }
+
     if (data.status !== 'OK') {
+      console.error("Place details error:", data.status, data.error_message);
       return NextResponse.json(
         { error: data.error_message || 'Place details request failed' },
         { status: 400 }

@@ -1929,7 +1929,15 @@ export default function Home() {
       // Use transformed query for API call
       const res  = await fetch(`/api/places?query=${encodeURIComponent(`${transformedPlaceType} in ${transformedQuery}`)}`);
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Something went wrong."); return; }
+      if (!res.ok) {
+        // Handle REQUEST_DENIED specifically with user-friendly message
+        if (res.status === 403 || data.error?.includes("access denied")) {
+          setError("Google Places API access denied. Please check API key configuration.");
+        } else {
+          setError(data.error ?? "Something went wrong.");
+        }
+        return;
+      }
       rawResultsRef.current = data.results ?? [];
       setResults(rankAndEnrichPlaces(rawResultsRef.current, selectedIntent, transformedPlaceType, tasteProfile));
     } catch {
