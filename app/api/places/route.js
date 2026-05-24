@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getCache, setCache } from "@/lib/cache";
  
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -11,11 +12,13 @@ export async function GET(request) {
     );
   }
  
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  console.log("ENV CHECK:", process.env.GOOGLE_MAPS_API_KEY ? "SET" : "MISSING");
+  console.log("GOOGLE MAPS KEY LOADED:", !!apiKey);
   if (!apiKey) {
-    console.error("Google Places API key is not configured");
+    console.error("Google Maps API key is not configured");
     return NextResponse.json(
-      { error: "Google Places API key is not configured" },
+      { error: "Google Maps API key is not configured" },
       { status: 500 }
     );
   }

@@ -1,3 +1,5 @@
+import { getCache, setCache } from '@/lib/cache';
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const ref = searchParams.get("ref");
@@ -9,10 +11,11 @@ export async function GET(request) {
     });
   }
  
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  console.log("GOOGLE MAPS KEY LOADED:", !!apiKey);
   if (!apiKey) {
-    console.error("Google Places API key is not configured");
-    return new Response(JSON.stringify({ error: "Google Places API key not configured" }), {
+    console.error("Google Maps API key is not configured");
+    return new Response(JSON.stringify({ error: "Google Maps API key not configured" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
@@ -49,4 +52,3 @@ export async function GET(request) {
     });
   }
 }
- 

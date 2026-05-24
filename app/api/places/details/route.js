@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getCache, setCache } from '@/lib/cache';
 
 export async function GET(request) {
   try {
@@ -12,13 +13,22 @@ export async function GET(request) {
       );
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    console.log("GOOGLE MAPS KEY LOADED:", !!apiKey);
     if (!apiKey) {
-      console.error("Google Places API key is not configured");
+      console.error("Google Maps API key is not configured");
       return NextResponse.json(
-        { error: 'Google Places API key not configured' },
+        { error: 'Google Maps API key not configured' },
         { status: 500 }
       );
+    }
+
+    // Check cache first
+    const cacheKey = `place-details:${placeId}`;
+    const cachedResult = getCache(cacheKey);
+    if (cachedResult) {
+      console.log("Cache hit for placeId:", placeId);
+      return NextResponse.json(cachedResult);
     }
 
     const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=reviews,opening_hours&key=${apiKey}`;
@@ -53,10 +63,15 @@ export async function GET(request) {
       );
     }
 
-    return NextResponse.json({
+    const result = {
       reviews: data.result.reviews || [],
       opening_hours: data.result.opening_hours || null
-    });
+    };
+
+    // Store in cache for 24 hours
+    setCache(cacheKey, result, 86400000);
+
+    return NextResponse.json(result);
 
   } catch (error) {
     console.error('Place details API error:', error);

@@ -562,6 +562,11 @@ function rankAndEnrichPlaces(places, selectedIntent, placeType, tasteProfile) {
   });
 
   rows.sort((a, b) => {
+    // Rating-based sorting (highest first, missing ratings pushed lower)
+    const aRating = a.place?.rating ?? -1;
+    const bRating = b.place?.rating ?? -1;
+    if (bRating !== aRating) return bRating - aRating;
+
     let pa;
     let pb;
     if (intentKey) {
@@ -1955,6 +1960,14 @@ export default function Home() {
     return results.filter((p) => p.place_id && fav.has(p.place_id));
   }, [results, showFavoritesOnly, favorites]);
 
+  const topPicks = useMemo(() => {
+    if (!results.length) return [];
+    return [...results]
+      .filter((r) => r.rating !== undefined && r.rating !== null)
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 3);
+  }, [results]);
+
   const visibleFeedResults = useMemo(() => {
     if (!showFavoritesOnly) return feedResults;
     const fav = new Set(favorites);
@@ -2110,7 +2123,7 @@ export default function Home() {
                 cursor: loading ? "not-allowed" : "pointer",
                 opacity: loading ? 0.6 : 1, whiteSpace:"nowrap",
               }}>
-                {loading ? "…" : "Find Spots"}
+                {loading ? "Searching nearby places…" : "Find Spots"}
               </button>
             </div>
           </form>
@@ -2245,6 +2258,30 @@ export default function Home() {
                   </button>
                 </div>
               </div>
+
+              {/* Top Picks Section */}
+              {!showFavoritesOnly && topPicks.length > 0 && (
+                <div style={{
+                  marginBottom: 32,
+                  padding: 20,
+                  background: "rgba(196,97,42,0.08)",
+                  borderRadius: 16,
+                  border: "1px solid rgba(196,97,42,0.15)",
+                }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
+                    <span style={{ fontSize:10, fontWeight:900, textTransform:"uppercase",
+                      letterSpacing:"0.3em", color:"var(--terracotta)" }}>
+                      Top Picks Near You
+                    </span>
+                    <span style={{ height:1, flex:1, background:"rgba(196,97,42,0.2)" }} />
+                  </div>
+                  <div className="place-grid">
+                    {topPicks.map((place) => (
+                      <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {showFavoritesOnly && visibleResults.length === 0 ? (
                 <p style={{
