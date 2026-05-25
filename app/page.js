@@ -784,7 +784,7 @@ function TornEdge() {
  
 // ─── PlaceCard ────────────────────────────────────────────────────────────────
  
-function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggleFavorite, onClick, tasteProfile }) {
+function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggleFavorite, onClick, tasteProfile, userLocation }) {
   const [imgError,    setImgError]    = useState(false);
   const [vibes,       setVibes]       = useState(null);
   const [editorLine,  setEditorLine]  = useState(null);
@@ -886,6 +886,10 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
       onClick={() => onToggleFavorite?.(place.place_id)}
     />
   ) : null;
+
+  const distance = userLocation && place.geometry?.location?.lat && place.geometry?.location?.lng
+    ? calculateDistance(userLocation.lat, userLocation.lng, place.geometry.location.lat, place.geometry.location.lng)
+    : null;
  
   // ── Featured ───────────────────────────────────────────────────────────────
   if (featured) {
@@ -977,6 +981,16 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
           }}>
             {place.name}
           </h2>
+          {distance !== null && (
+            <p style={{
+              fontSize: 11,
+              color: "rgba(245, 237, 216, 0.7)",
+              marginBottom: 8,
+              fontWeight: 500,
+            }}>
+              {distance.toFixed(1)} mi away
+            </p>
+          )}
           <p style={{ fontSize: 12, color: "#a8a29e", marginBottom: 12, lineHeight: 1.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>
             {place.formatted_address}
           </p>
@@ -1120,7 +1134,18 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
           </h2>
           <PriceLevel level={place.price_level} />
         </div>
- 
+
+        {distance !== null && (
+          <p style={{
+            fontSize: 11,
+            color: "rgba(245, 237, 216, 0.7)",
+            marginBottom: 6,
+            fontWeight: 500,
+          }}>
+            {distance.toFixed(1)} mi away
+          </p>
+        )}
+
         <p style={{ fontSize: 11, color: "#a8a29e", marginBottom: 10, lineHeight: 1.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>
           {place.formatted_address}
         </p>
@@ -1691,6 +1716,8 @@ export default function Home() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [tasteProfile, setTasteProfile] = useState(null);
+  const [nearMeMode, setNearMeMode] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
 
   // Log Google Maps API key in development mode
   useEffect(() => {
@@ -1924,6 +1951,18 @@ export default function Home() {
     return { transformedQuery, transformedPlaceType };
   }
 
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!query.trim()) return;
@@ -1946,7 +1985,11 @@ export default function Home() {
     
     try {
       // Use transformed query for API call
-      const res  = await fetch(`/api/places?query=${encodeURIComponent(`${transformedPlaceType} in ${transformedQuery}`)}`);
+      let apiUrl = `/api/places?query=${encodeURIComponent(`${transformedPlaceType} in ${transformedQuery}`)}`;
+      if (nearMeMode && userLocation) {
+        apiUrl += `&lat=${userLocation.lat}&lng=${userLocation.lng}`;
+      }
+      const res  = await fetch(apiUrl);
       const data = await res.json();
       if (!res.ok) {
         // Handle REQUEST_DENIED specifically with user-friendly message
@@ -1957,7 +2000,14 @@ export default function Home() {
         }
         return;
       }
-      rawResultsRef.current = data.results ?? [];
+      let results = data.results ?? [];
+      if (nearMeMode && userLocation) {
+        results = results.map(place => ({
+          ...place,
+          distance: calculateDistance(userLocation.lat, userLocation.lng, place.geometry?.location?.lat, place.geometry?.location?.lng)
+        })).sort((a, b) => a.distance - b.distance);
+      }
+      rawResultsRef.current = results;
       setResults(rankAndEnrichPlaces(rawResultsRef.current, selectedIntent, transformedPlaceType, tasteProfile));
     } catch {
       setError("Network error — please check your connection and try again.");
@@ -2121,7 +2171,50 @@ export default function Home() {
                 </option>
               ))}
             </select>
- 
+
+            <button
+              type="button"
+              onClick={() => {
+                if (nearMeMode) {
+                  setNearMeMode(false);
+                  setUserLocation(null);
+                } else {
+                  if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                      (position) => {
+                        setUserLocation({
+                          lat: position.coords.latitude,
+                          lng: position.coords.longitude,
+                        });
+                        setNearMeMode(true);
+                      },
+                      (error) => {
+                        console.error("Geolocation error:", error);
+                        setError("Location access denied. Using normal search.");
+                      }
+                    );
+                  } else {
+                    setError("Geolocation not supported by your browser.");
+                  }
+                }
+              }}
+              style={{
+                background: nearMeMode ? "var(--terracotta)" : "rgba(245,237,216,0.1)",
+                color: nearMeMode ? "var(--cream)" : "var(--parchment)",
+                border: nearMeMode ? "none" : "1px solid rgba(245,237,216,0.2)",
+                borderRadius: 12,
+                padding: "10px 16px",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                outline: "none",
+                whiteSpace: "nowrap",
+                transition: "all 0.2s ease",
+              }}
+            >
+              {nearMeMode ? "✓ Near Me" : "Near Me"}
+            </button>
+
             <div style={{ flex:1, minWidth:0, display:"flex", gap:8 }}>
               <input type="text" value={query} onChange={(e) => {
                 const newQuery = e.target.value;
@@ -2300,7 +2393,7 @@ export default function Home() {
                   </div>
                   <div className="place-grid">
                     {topPicks.map((place) => (
-                      <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} />
+                      <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} userLocation={userLocation} />
                     ))}
                   </div>
                 </div>
@@ -2330,13 +2423,13 @@ export default function Home() {
                     </div>
 
                     {/* Featured card — standalone block, fully outside the grid */}
-                    <PlaceCard place={visibleResults[0]} featured isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(visibleResults[0])} tasteProfile={tasteProfile} />
+                    <PlaceCard place={visibleResults[0]} featured isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(visibleResults[0])} tasteProfile={tasteProfile} userLocation={userLocation} />
 
                     {/* Regular cards grid */}
                     {visibleResults.length > 1 && (
                       <div className="place-grid">
                         {visibleResults.slice(1).map((place) => (
-                          <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} />
+                          <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} userLocation={userLocation} />
                         ))}
                       </div>
                     )}
@@ -2457,13 +2550,13 @@ export default function Home() {
                           </div>
 
                           {/* Featured card — standalone block, fully outside the grid */}
-                          <PlaceCard place={visibleFeedResults[0]} featured isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(visibleFeedResults[0])} tasteProfile={tasteProfile} />
+                          <PlaceCard place={visibleFeedResults[0]} featured isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(visibleFeedResults[0])} tasteProfile={tasteProfile} userLocation={userLocation} />
 
                           {/* Regular cards grid */}
                           {visibleFeedResults.length > 1 && (
                             <div className="place-grid">
                               {visibleFeedResults.slice(1).map((place) => (
-                                <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} />
+                                <PlaceCard key={place.place_id} place={place} isFavorite={isFavorite} onToggleFavorite={toggleFavorite} onClick={() => setSelectedPlace(place)} tasteProfile={tasteProfile} userLocation={userLocation} />
                               ))}
                             </div>
                           )}
