@@ -113,6 +113,20 @@ const GOOGLE_PRIMARY_TYPE_TO_CATEGORY = {
   candy_store: "dessert cafe",
 };
 
+const RadiusLogo = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    style={{ color: "var(--parchment)" }}
+  >
+    <circle cx="12" cy="12" r="2" fill="currentColor" />
+    <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1" opacity="0.25" />
+  </svg>
+);
+
 function relevanceCategoryFromPlace(place) {
   const primary = place?.types?.[0];
   if (!primary) return null;
@@ -2034,13 +2048,15 @@ export default function Home() {
               <span style={{ height:1, width:48, background:"rgba(196,97,42,0.6)", display:"block" }} />
             </div>
  
-            <h1 style={{
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               fontFamily:"'Georgia','Times New Roman',serif",
               fontSize:"clamp(3.5rem, 10vw, 7rem)", fontWeight:900,
               color:"var(--cream)", lineHeight:1, letterSpacing:"-0.02em", margin:"0 0 16px",
             }}>
-              Radius
-            </h1>
+              <RadiusLogo />
+              <span style={{ lineHeight: 1 }}>Radius</span>
+            </div>
  
             <div style={{
               display:"inline-block",
