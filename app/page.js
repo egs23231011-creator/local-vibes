@@ -115,11 +115,11 @@ const GOOGLE_PRIMARY_TYPE_TO_CATEGORY = {
 
 const RadiusLogo = () => (
   <svg
-    width="20"
-    height="20"
+    width="24"
+    height="24"
     viewBox="0 0 24 24"
     fill="none"
-    style={{ color: "var(--parchment)" }}
+    style={{ color: "var(--parchment)", flexShrink: 0, opacity: 0.9 }}
   >
     <circle cx="12" cy="12" r="2" fill="currentColor" />
     <circle cx="12" cy="12" r="7" stroke="currentColor" strokeWidth="1.5" opacity="0.6" />
@@ -2051,8 +2051,8 @@ export default function Home() {
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               fontFamily:"'Georgia','Times New Roman',serif",
-              fontSize:"clamp(3.5rem, 10vw, 7rem)", fontWeight:900,
-              color:"var(--cream)", lineHeight:1, letterSpacing:"-0.02em", margin:"0 0 16px",
+              fontSize:"clamp(3.5rem, 10vw, 7rem)", fontWeight:500,
+              color:"rgba(245, 237, 216, 0.9)", lineHeight:1, letterSpacing:"0.025em", margin:"0 0 16px",
             }}>
               <RadiusLogo />
               <span style={{ lineHeight: 1 }}>Radius</span>
