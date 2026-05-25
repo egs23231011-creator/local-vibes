@@ -2039,7 +2039,7 @@ export default function Home() {
               fontSize:"clamp(3.5rem, 10vw, 7rem)", fontWeight:900,
               color:"var(--cream)", lineHeight:1, letterSpacing:"-0.02em", margin:"0 0 16px",
             }}>
-              Local <em style={{ color:"var(--terracotta)", fontStyle:"italic" }}>Vibes</em>
+              Radius
             </h1>
  
             <div style={{
