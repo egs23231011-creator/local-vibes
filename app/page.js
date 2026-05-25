@@ -2055,7 +2055,14 @@ export default function Home() {
               color:"rgba(245, 237, 216, 0.9)", lineHeight:1, letterSpacing:"0.025em", margin:"0 0 16px",
             }}>
               <RadiusLogo />
-              <span style={{ lineHeight: 1 }}>Radius</span>
+              <span style={{
+                lineHeight: 1,
+                background: "linear-gradient(to right, #fde68a, #fef08a, #fdba74)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                fontWeight: 600,
+              }}>Radius</span>
             </div>
  
             <div style={{
