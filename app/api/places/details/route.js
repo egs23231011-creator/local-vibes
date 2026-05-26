@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getCache, setCache } from '@/lib/cache';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function GET(request) {
+  // Rate limit check
+  const rateLimit = checkRateLimit(request);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: rateLimit.error },
+      { status: 429 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const placeId = searchParams.get('placeId');
@@ -68,8 +78,8 @@ export async function GET(request) {
       opening_hours: data.result.opening_hours || null
     };
 
-    // Store in cache for 24 hours
-    setCache(cacheKey, result, 86400000);
+    // Store in cache for 10 minutes
+    setCache(cacheKey, result);
 
     return NextResponse.json(result);
 

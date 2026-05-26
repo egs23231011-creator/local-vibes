@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request) {
+  // Rate limit check
+  const rateLimit = checkRateLimit(request);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: rateLimit.error },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { reviews, placeId, placeName } = body;

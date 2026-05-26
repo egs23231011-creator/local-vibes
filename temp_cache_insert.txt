@@ -1,0 +1,7 @@
+  // Check cache first
+  const cacheKey = `places-search:${query}`;
+  const cachedResult = getCache(cacheKey);
+  if (cachedResult) {
+    console.log("Cache hit for query:", query);
+    return NextResponse.json(cachedResult);
+  }

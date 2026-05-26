@@ -1,6 +1,16 @@
 import { getCache, setCache } from '@/lib/cache';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function GET(request) {
+  // Rate limit check
+  const rateLimit = checkRateLimit(request);
+  if (!rateLimit.allowed) {
+    return new Response(JSON.stringify({ error: rateLimit.error }), {
+      status: 429,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const { searchParams } = new URL(request.url);
   const ref = searchParams.get("ref");
  
