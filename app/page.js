@@ -516,6 +516,19 @@ const INTENT_SUMMARY_PHRASES = {
   dateNight: "late-night dates",
 };
 
+/** Generate "Why this place" insight line from bestFor tags */
+function buildWhyThisPlace(bestFor) {
+  if (!bestFor || !Array.isArray(bestFor) || bestFor.length === 0) return null;
+  
+  const topTags = bestFor.slice(0, 2);
+  if (topTags.length === 1) {
+    return `Great for ${topTags[0].toLowerCase()}`;
+  } else if (topTags.length === 2) {
+    return `Great for ${topTags[0].toLowerCase()} + ${topTags[1].toLowerCase()}`;
+  }
+  return null;
+}
+
 function buildBestForSummary(place, displayVibes) {
   const dominant = place.dominantVibe ?? dominantVibeFromScores(displayVibes);
   const top =
@@ -847,6 +860,7 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
  
   const displayVibes = vibes ?? scoreIntentVibes(place, []);
   const bestForSummary = buildBestForSummary(place, displayVibes);
+  const whyThisPlace = buildWhyThisPlace(bestFor);
   const photoRef = place.photos?.[0]?.photo_reference;
   const photoUrl = photoRef && !imgError
     ? `/api/places/photo?ref=${encodeURIComponent(photoRef)}`
@@ -989,6 +1003,18 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
               fontWeight: 500,
             }}>
               {distance.toFixed(1)} mi away
+            </p>
+          )}
+          {whyThisPlace && (
+            <p style={{
+              fontSize: 12,
+              color: "var(--espresso)",
+              opacity: 0.6,
+              marginBottom: 8,
+              fontWeight: 500,
+              fontStyle: "italic",
+            }}>
+              {whyThisPlace}
             </p>
           )}
           <p style={{ fontSize: 12, color: "#a8a29e", marginBottom: 12, lineHeight: 1.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>
@@ -1143,6 +1169,19 @@ function PlaceCard({ place, featured = false, isFavorite: checkFavorite, onToggl
             fontWeight: 500,
           }}>
             {distance.toFixed(1)} mi away
+          </p>
+        )}
+
+        {whyThisPlace && (
+          <p style={{
+            fontSize: 11,
+            color: "var(--espresso)",
+            opacity: 0.6,
+            marginBottom: 6,
+            fontWeight: 500,
+            fontStyle: "italic",
+          }}>
+            {whyThisPlace}
           </p>
         )}
 
@@ -1332,6 +1371,7 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
 
   const displayVibes = vibes ?? scoreIntentVibes(place, []);
   const bestForSummary = buildBestForSummary(place, displayVibes);
+  const whyThisPlace = buildWhyThisPlace(bestFor);
   const dominantVibe = dominantVibeFromScores(displayVibes);
   const topVibes = topVibesFromScores(displayVibes);
   const photoRef = place?.photos?.[0]?.photo_reference;
@@ -1452,6 +1492,18 @@ function PlaceDetailModal({ place, onClose, isFavorite, onToggleFavorite }) {
           }}>
             {place.name}
           </h2>
+          {whyThisPlace && (
+            <p style={{
+              fontSize: 13,
+              color: "var(--espresso)",
+              opacity: 0.6,
+              marginBottom: 8,
+              fontWeight: 500,
+              fontStyle: "italic",
+            }}>
+              {whyThisPlace}
+            </p>
+          )}
           <p style={{ fontSize: 13, color: "#a8a29e", marginBottom: 12, lineHeight: 1.5, wordBreak: "break-word", overflowWrap: "anywhere" }}>
             {place.formatted_address}
           </p>

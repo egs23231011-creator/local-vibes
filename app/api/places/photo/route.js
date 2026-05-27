@@ -31,6 +31,20 @@ export async function GET(request) {
     });
   }
  
+  // Check cache first
+  const cacheKey = `place-photo:${ref}`;
+  const cachedResult = getCache(cacheKey);
+  if (cachedResult) {
+    console.log("Cache hit for photo ref:", ref);
+    return new Response(cachedResult.body, {
+      status: 200,
+      headers: {
+        "Content-Type": cachedResult.contentType,
+        "Cache-Control": "public, max-age=86400, stale-while-revalidate=3600",
+      },
+    });
+  }
+
   const googleUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${encodeURIComponent(ref)}&key=${apiKey}`;
  
   try {
@@ -47,7 +61,11 @@ export async function GET(request) {
  
     const contentType = googleRes.headers.get("content-type") ?? "image/jpeg";
  
-    return new Response(googleRes.body, {
+    // Store in cache
+    const bodyBuffer = await googleRes.arrayBuffer();
+    setCache(cacheKey, { body: bodyBuffer, contentType });
+
+    return new Response(bodyBuffer, {
       status: 200,
       headers: {
         "Content-Type": contentType,
